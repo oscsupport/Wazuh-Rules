@@ -1,0 +1,44 @@
+<!-- https://regex101.com/r/6Iyg2r/1 -->
+
+<decoder name="unifi_controller">
+  <prematch type="pcre2">CEF:1\|Ubiquiti\|UniFi Network\|</prematch>
+</decoder>
+
+
+<!-- Collect Admin IP  -->
+<decoder name="unifi_controller_fields">
+    <parent>unifi_controller</parent>
+    <regex offset="after_parent" type="pcre2">admin_ip=(\d+.\d+.\d+.\d+)</regex>
+    <order>admin_ip</order>
+</decoder>
+
+
+<!-- Admin Accessed UI -->
+<decoder name="unifi_controller_fields">
+    <parent>unifi_controller</parent>
+    <regex offset="after_parent" type="pcre2">.*\|.*\|(.*) opened UniFi Network</regex>
+    <order>admin_user_logon</order>
+</decoder>
+
+
+<!-- Port forward -->
+<decoder name="unifi_controller_fields">
+    <parent>unifi_controller</parent>
+    <regex offset="after_parent" type="pcre2">.*\|admin_activity-.*\|(.*) (paused|removed|created) (.*) (PORT_FORWARD).\|.*pfwd_interface=\[([^\]]+)].*fwd=\[(\d+.\d+.\d+.\d+).*destination_ip=\[(\d+.\d+.\d+.\d+).*src=\[([^\]]+)].*proto=\[([^\]]+)].*dst_port=\[([^\]]+)].* name=.*fwd_port=\[([^\]]+)]</regex>
+    <order>admin_name,pf_status,pf_name,pf,wan,pf_src_ip,pf_dest_ip,_any_something,pf_protocol, pf_src_port,pf_dest_port</order>
+</decoder>
+
+
+<!-- Common -->
+<decoder name="unifi_controller_fields">
+    <parent>unifi_controller</parent>
+    <regex offset="after_parent" type="pcre2">(.*)\|.*\|.*\|(Low|Medium|High)\|</regex>
+    <order>version,severity</order>
+</decoder>
+
+<!-- Event type -->
+<decoder name="unifi_controller_fields">
+    <parent>unifi_controller</parent>
+    <regex offset="after_parent" type="pcre2">.*\|(.*_.*)-.*\|</regex>
+    <order>event_type</order>
+</decoder>

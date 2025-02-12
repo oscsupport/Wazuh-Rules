@@ -1,0 +1,33 @@
+<group name="unifi,">
+
+    <!-- High Severity Events -->
+
+    <rule id="222301" level="16">
+        <decoded_as>unifi_controller</decoded_as>
+        <field name="pf">PORT_FORWARD</field>
+        <description>Port forward rule $(pf_name) $(pf_status) by $(admin_name)</description>
+    </rule>
+
+
+    <!-- Medium Severity Events -->
+    
+    <rule id="222341" level="8">
+        <decoded_as>unifi_controller</decoded_as>
+        <field name="admin_user_logon">\.</field>
+        <description>Admin $(admin_user_logon) logged in from $(admin_ip)</description>
+    </rule>
+
+
+    <!-- Low Severity Events -->
+    <!-- Catch all with some info -->
+    <rule id="222371" level="3" ignore="5">
+        <decoded_as>unifi_controller</decoded_as>
+        <description>unifi unknown event $(event_type)</description>
+    </rule>
+    <!-- Catch all -->
+    <rule id="222399" level="3" ignore="5">
+        <decoded_as>unifi_controller</decoded_as>
+        <description>unifi event $(data)</description>
+    </rule>
+    
+</group>

@@ -1,0 +1,5 @@
+Feb  4 15:39:37 CET 1.1.1.1 CEF:1|Ubiquiti|UniFi Network|9.2.123|admin_activity-123412341234cccc|some name opened UniFi Network via the web.|Medium|admin_ip=1.1.1.1
+
+2025 Feb 05 08:16:58 wazuh->1.1.1.1 Feb 05 09:16:58.014 CET 1.1.1.1 CEF:1|Ubiquiti|UniFi Network|9.2.123|admin_activity-123412341234cccc|Some Name removed deleteme PORT_FORWARD.|Medium|admin_ip=192.168.1.2 pfwd_interface=[wan2]->[] fwd=[192.168.2.1]->[] destination_ip=[192.168.0.2]->[] src=[any]->[] log=[false]->[] proto=[tcp_udp]->[] dst_port=[1234]->[] name=[deleteme]->[] fwd_port=[1234]->[] enabled=[false]->[]
+
+Feb 05 09:32:32.217 CET 1.1.1.1 CEF:1|Ubiquiti|UniFi Network|9.2.123|security_detections-123412341234cccc|IPS Alert 2: Misc Attack. Signature ET DROP Dshield Block Listed Source group 1. From: 123.123.12.133:11111, to: 192.168.1.51:1111, protocol: TCP|Medium|signature_type=ET signature_id=2402000
