@@ -17,6 +17,7 @@ This repo is for custom rules, decoders and possibly other Wazuh related item
 * [Regex](https://documentation.wazuh.com/current/user-manual/ruleset/ruleset-xml-syntax/regex.html)
 * Use [this](https://regex101.com/r/nPoEcH/1) page to validate regex while testing
 
+
 ## Rules
 * Unifi
     * Port Forward Delete
