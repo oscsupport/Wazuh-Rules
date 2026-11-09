@@ -1,0 +1,11 @@
+<group name="ceph,sudo,">
+
+    <!-- Low Severity Events -->
+    <!-- Ceph devicehealth SMART poll via sudo -->
+    <rule id="222401" level="0">
+        <if_sid>5402,5403</if_sid>
+        <match>smartctl|nvme</match>
+        <description>Ceph devicehealth SMART poll via sudo (ignored)</description>
+    </rule>
+
+</group>
