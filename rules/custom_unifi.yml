@@ -1,0 +1,120 @@
+# Wazuh 5.x rules for UniFi Network. Each YAML document (split by ---) is ONE rule:
+# create each separately (Ruleset management > Detection > Rules > Create > YAML editor,
+# or POST /_plugins/_content_manager/rules) in the custom integration titled "unifi".
+# logsource.product must equal that integration's title.
+# Matches the event.action values set by decoders/custom_unifi.yml.
+# Levels from the 4.x numbers: 16 critical, 12 high, 8 medium, 3 informational.
+# Sorted high to low severity.
+
+# --- Critical: port forwarding changed (4.x rule 222301, level 16)
+enabled: true
+status: experimental
+level: critical
+metadata:
+  title: UniFi port forwarding changed
+  author: ingar195
+  date: "2026-11-10"
+  description: A port forward was created, changed or removed in UniFi Network.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection
+  selection:
+    event.action: unifi-portforward-changed
+---
+# --- High: firewall policy changed (4.x rule 222311, level 12)
+enabled: true
+status: experimental
+level: high
+metadata:
+  title: UniFi firewall policy changed
+  author: ingar195
+  date: "2026-11-10"
+  description: A firewall policy was created, modified, reordered, paused or removed in UniFi Network.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection
+  selection:
+    event.action: unifi-firewall-policy-changed
+---
+# --- High: devices offline (4.x rule 222312, level 12)
+enabled: true
+status: experimental
+level: high
+metadata:
+  title: UniFi devices offline
+  author: ingar195
+  date: "2026-11-10"
+  description: UniFi Network reports one or more devices offline.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection
+  selection:
+    event.action: unifi-devices-offline
+---
+# --- Medium: admin access (4.x rule 222341, level 8)
+enabled: true
+status: experimental
+level: medium
+metadata:
+  title: UniFi admin access
+  author: ingar195
+  date: "2026-11-10"
+  description: An admin logged in to UniFi Network.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection
+  selection:
+    event.action: unifi-admin-access
+---
+# --- Low: blocked domain (new in 5.x; event 203)
+# Only when the block had a domain, to keep volume down. message holds the client
+# name, the destination and the policy.
+enabled: true
+status: experimental
+level: informational
+metadata:
+  title: UniFi blocked domain
+  author: ingar195
+  date: "2026-11-10"
+  description: A client was blocked from reaching a domain by a UniFi firewall policy.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection
+  selection:
+    event.action: unifi-firewall-blocked
+    destination.domain|exists: true
+---
+# --- Low: any other UniFi event (4.x base rule 222300, level 3)
+# 5.x rules cannot chain, so this excludes the actions the rules above cover.
+enabled: true
+status: experimental
+level: informational
+metadata:
+  title: UniFi other event
+  author: ingar195
+  date: "2026-11-10"
+  description: Any UniFi Network event not covered by a specific rule.
+logsource:
+  product: unifi
+  service: unifi-network
+detection:
+  condition: selection and not filter
+  selection:
+    observer.product: UniFi Network
+  filter:
+    event.action:
+      - unifi-portforward-changed
+      - unifi-firewall-policy-changed
+      - unifi-admin-access
+      - unifi-devices-offline
+      - unifi-firewall-blocked

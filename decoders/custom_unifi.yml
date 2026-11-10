@@ -1,0 +1,121 @@
+# Wazuh 5.x decoder for UniFi Network SIEM (CEF) events received over syslog.
+# Load: Ruleset management > Normalization > Decoders > Create, in the custom
+# integration titled "unifi" (rules/custom_unifi.yml must use the same title).
+#
+# Written for UniFi Network 11.x. Real line it is built from (see validate.log):
+#   <header> CEF: 0|Ubiquiti|UniFi Network|11.1.47|545|Config Created|5|UNIFIcategory=Audit ...
+#   UNIFIsettingsSection=Port forwarding UNIFIsettingsEntry=a UNIFIadmin=Some Name src=1.1.1.1 cnt=10
+#   ... msg=Some Name created a Port forwarding. Source IP: 1.1.1.1
+#
+# Fields written are Wazuh Common Schema (WCS) fields, because 5.x rules can only
+# match those. Temporary fields start with _ and are dropped after decoding.
+name: decoder/unifi-cef/0
+enabled: true
+metadata:
+  title: UniFi Network CEF
+  description: Decodes UniFi Network SIEM (CEF) events received over syslog.
+  author: ingar195
+  date: 2026-11-10
+check:
+  - event.original: contains('|Ubiquiti|UniFi Network|')
+parse|event.original:
+  # Header text before CEF is skipped, so the rsyslog line format does not matter.
+  - "<~>CEF:<_cef_version>|Ubiquiti|UniFi Network|<_unifi_version>|<_event_id>|<_title>|<event.severity>|<_ext>"
+normalize:
+  # Defaults for every UniFi event; the blocks below override event.action.
+  - map:
+      - observer.vendor: Ubiquiti
+      - observer.product: UniFi Network
+      - event.kind: event
+      - event.code: $_event_id
+      - event.action: unifi-event
+      - message: $_title
+  # Who did it: UNIFIadmin=<name> src=<ip> cnt=<n>
+  - check:
+      - _ext: contains('UNIFIadmin=')
+    parse|_ext:
+      - "<~>UNIFIadmin=<user.name> src=<source.ip> cnt=<~>"
+      - "<~>UNIFIadmin=<user.name> cnt=<~>"
+  # Human readable message, last field in the line.
+  - check:
+      - _ext: contains(' msg=')
+    parse|_ext:
+      - "<~> msg=<message>"
+  # Which part of UniFi was changed (Port forwarding, Firewall Policy, ...).
+  - check:
+      - _ext: contains('UNIFIsettingsSection=')
+    parse|_ext:
+      - "<~>UNIFIsettingsSection=<_section> UNIFIsettingsEntry=<_entry> UNIFIadmin=<~>"
+  # Any Audit event (545 created, 546 modified, 547 paused, 548 resumed, 549 removed, reorder, ...)
+  # is classified by section, so new event IDs for the same section need no decoder change.
+  - check:
+      - _ext: contains('UNIFIcategory=Audit')
+      - _section: 'Port forwarding'
+    map:
+      - event.action: unifi-portforward-changed
+      - event.category: array_append(configuration)
+  - check:
+      - _ext: contains('UNIFIcategory=Audit')
+      - _section: 'Firewall Policy'
+    map:
+      - event.action: unifi-firewall-policy-changed
+      - event.category: array_append(configuration)
+  # Event 544 = admin access (login).
+  - check:
+      - _event_id: '544'
+    map:
+      - event.action: unifi-admin-access
+      - event.category: array_append(authentication)
+  # Event 515 = devices offline.
+  - check:
+      - _event_id: '515'
+    map:
+      - event.action: unifi-devices-offline
+  # Event 203 = traffic blocked by a firewall policy. Kept small on purpose: where it
+  # was going (domain/ip/port) and which policy. The client name is in message.
+  - check:
+      - _event_id: '203'
+    map:
+      - event.action: unifi-firewall-blocked
+      - event.category: array_append(network)
+  - check:
+      - _event_id: '203'
+    parse|_ext:
+      - "<~> dst=<destination.ip> <~>"
+  - check:
+      - _event_id: '203'
+    parse|_ext:
+      - "<~> dpt=<destination.port> act=<~>"
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIdstDomain=')
+    parse|_ext:
+      - "<~> UNIFIdstDomain=<destination.domain> <~>"
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIpolicyName=')
+    parse|_ext:
+      - "<~> UNIFIpolicyName=<rule.name> UNIFIpolicyType=<~>"
+  # Who was blocked and where they were going: client IP, client hostname, source zone and
+  # destination country. These feed the blocked-domain dashboard.
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIsrcClientIp=')
+    parse|_ext:
+      - "<~> UNIFIsrcClientIp=<source.ip> <~>"
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIsrcClientHostname=')
+    parse|_ext:
+      - "<~> UNIFIsrcClientHostname=<source.domain> <~>"
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIsrcZone=')
+    parse|_ext:
+      - "<~> UNIFIsrcZone=<observer.ingress.zone> UNIFIdstRegion=<~>"
+      - "<~> UNIFIsrcZone=<observer.ingress.zone> UNIFIdstZone=<~>"
+  - check:
+      - _event_id: '203'
+      - _ext: contains(' UNIFIdstRegion=')
+    parse|_ext:
+      - "<~> UNIFIdstRegion=<destination.geo.country_iso_code> <~>"
